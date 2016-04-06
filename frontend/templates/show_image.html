@@ -1,0 +1,32 @@
+<html>
+
+<head>
+
+</head>
+<body>
+<h1> source image</h1>
+
+<img style='margin-top:20vh; margin-left: auto; margin-right: auto; display: block;' width='600px' src='{{source.url}}' />
+<div> picture name: {{source.name}} </div>
+<div> style: {{source.style}} </div>
+
+<h1> result image</h1>
+<table class="u-full-width">
+          <tr>
+          <th>Name</th>  
+          <th>Style</th> 
+          <th>Picture</th>
+          </tr>  
+          {% for n in results_list %}
+          <tr>
+          <td>{{n.name}}</td>
+          <td>{{n.style}}</td>
+          <td><img style='margin-top:20vh; margin-left: auto; margin-right: auto; display: block;' width='300px' src='{{n.url}}' />
+          </td>
+          </tr>
+          {% endfor %}
+    </table>
+
+</body>
+
+</html>	
