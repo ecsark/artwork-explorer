@@ -1,12 +1,9 @@
-<html>
-
-<head>
-
-</head>
+<html> 
+<link rel="stylesheet" media="screen" href = "{{ url_for('static', filename='bootstrap.min.css') }}">
+<link href= "{{ url_for('static', filename='my-styles.css') }}" rel="stylesheet" media="screen">
 <body>
-<h1> Mona Lisa</h1>
-
-<form method="GET" action="/query">
+<h1>Art Explorer </h1>
+  <form method="GET" action="/query">
   <dl>
       <dt>img_id:
       <dd><input type=text name=img_id>
@@ -18,6 +15,15 @@
       <p><input type=file name=file>
          <input type=submit value=Upload>
     </form>
-</body>
 
-</html> 
+<h1>Query an image URL</h1>
+    <form method="GET" action="/query_url">
+    <dl>
+      <dt>img_url:
+      <dd><input type=text name=img_url>
+      <dd><input type=submit value=Show Image>
+  </dl>
+    </form>
+
+</body>    
+</html>

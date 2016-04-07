@@ -1,31 +1,98 @@
+<!DOCTYPE HTML>
 <html>
+<link rel="stylesheet" media="screen" href = "{{ url_for('static', filename='bootstrap.min.css') }}">
 
 <head>
 
+
+<script type="text/javascript">
+	window.onload = function () {
+		var chart = new CanvasJS.Chart("chartContainer", {
+
+			title:{
+				text:"Possibility of Styles"				
+
+			},
+                        animationEnabled: true,
+			axisX:{
+				interval: 1,
+				gridThickness: 0,
+				labelFontSize: 10,
+				labelFontStyle: "normal",
+				labelFontWeight: "normal",
+				labelFontFamily: "Lucida Sans Unicode"
+
+			},
+			axisY2:{
+				interlacedColor: "rgba(1,77,101,.2)",
+				gridColor: "rgba(1,77,101,.1)"
+
+			},
+
+			data: [
+			{     
+				type: "bar",
+                name: "styles",
+				axisYType: "secondary",
+				color: "#014D65",				
+				dataPoints: [
+				
+				{y: {{poss[0]}}, label: "Art Nouveau (Modern)"  },
+				{y: {{poss[1]}}, label: "Baroque"  },
+				{y: {{poss[2]}}, label: "Expressionism"  },
+				{y: {{poss[3]}}, label: "Impressionism"  },
+				{y: {{poss[4]}}, label: "Neoclassicism"  },
+				{y: {{poss[5]}}, label: "Post-Impressionism"  },
+				{y: {{poss[6]}}, label: "Realism"  },
+				{y: {{poss[7]}}, label: "Romanticism"  },
+				{y: {{poss[8]}}, label: "Surrealism"  },
+				{y: {{poss[9]}}, label: "Symbolism"  }
+				]
+			}
+			
+			]
+		});
+
+chart.render();
+}
+</script>
+<script type="text/javascript" src="{{ url_for('static', filename='canvasjs.min.js')}}"></script>
+
 </head>
 <body>
-<h1> source image</h1>
 
-<img style='margin-top:20vh; margin-left: auto; margin-right: auto; display: block;' width='600px' src='{{source.url}}' />
-<div> picture name: {{source.name}} </div>
+<div class="container">
+<div class="row">
+<div class="col-lg-12">
+                <h2 class="page-header">Source Image</h2>
+</div>
+<div class="col-lg-6 col-md-4 col-xs-6 thumb">
+<img class="img-responsive"  src='{{source.url}}' style="height: 300px;" />
 <div> style: {{source.style}} </div>
+</div>
+<div class="col-lg-6 col-md-4 col-xs-6 thumb">  
+<div id="chartContainer" style="height: 300px; width: 100%;"> </div>
+</div>
+</div>
+</div>
 
-<h1> result image</h1>
-<table class="u-full-width">
-          <tr>
-          <th>Name</th>  
-          <th>Style</th> 
-          <th>Picture</th>
-          </tr>  
-          {% for n in results_list %}
-          <tr>
-          <td>{{n.name}}</td>
-          <td>{{n.style}}</td>
-          <td><img style='margin-top:20vh; margin-left: auto; margin-right: auto; display: block;' width='300px' src='{{n.url}}' />
-          </td>
-          </tr>
-          {% endfor %}
-    </table>
+<div class="container">
+<div class="row">
+
+            <div class="col-lg-12">
+                <h2 class="page-header">Similar Style</h2>
+            </div>
+{% for n in results_list %}
+            <div class="col-lg-3 col-md-4 col-xs-6 thumb">
+            	{{n.artist}}</br>	
+          		{{n.name}}</br>
+          		{{n.style}}</br>
+                <a class="thumbnail" href="#">
+                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;">
+                </a>
+            </div>
+{% endfor %}            
+</div>
 
 </body>
 

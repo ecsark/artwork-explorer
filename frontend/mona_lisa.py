@@ -109,8 +109,12 @@ class ZeroScoreRecommender:
         dist = distance.cdist(X, np.array([x_query]), 'euclidean')
         return dist.flatten().argsort()[:k]
 
+    @staticmethod
+    def convert_to_votes(decision):
+        return (np.array(decision)>0).sum(axis=1).tolist()
+
     def recommend(self, decision, k=6):
-        k_sim_idx = self.findMostSimilar(self.score_rank_zero, (np.array(decision)>0).sum(axis=1).tolist(), k)
+        k_sim_idx = self.findMostSimilar(self.score_rank_zero, self.convert_to_votes(decision), k)
         return k_sim_idx
 
 

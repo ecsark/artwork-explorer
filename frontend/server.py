@@ -8,12 +8,12 @@ import random
 from werkzeug import secure_filename
 import caffe    
 from mona_lisa import VGGFeatureExtractor, PretrainedSVC, ZeroScoreRecommender
+from flask_bootstrap import Bootstrap
 import cPickle as pickle
 
 
 UPLOAD_FOLDER = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/frontend/static/upload/'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
@@ -22,7 +22,7 @@ img_dir = "/Users/ecsark/Documents/visualdb/project/wikiart/images/"
 app = Flask(__name__, template_folder=tmpl_dir)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = os.urandom(24)
-
+Bootstrap(app)
 
 proj_root = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/'
 caffe_root = '/Users/ecsark/Documents/visualdb/caffe/'
@@ -36,10 +36,17 @@ recommender = ZeroScoreRecommender(proj_root + 'model/decision_scores_train.pk')
 DATABASEURI = "postgresql://localhost/artdb"
 engine = create_engine(DATABASEURI)
 
+style_name = ["Art Nouveau", "Baroque", 
+              "Expressionism", "Impressionism", 
+              "Neoclassicism", "Post-Impressionism", 
+              "Realism", "Romanticism", 
+              "Surrealism", "Symbolism"]
+
 class img_info:
-  def __init__(self, img_id, style, name, url):
+  def __init__(self, img_id, style, artist, name, url):
     self.img_id = img_id
-    self.style = style
+    self.style = get_style_name(style)
+    self.artist = artist
     self.name = name
     self.url = url
 
@@ -74,7 +81,6 @@ def teardown_request(exception):
 def index():
   return render_template("index.html")
 
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
@@ -87,31 +93,33 @@ def upload_file():
             filename = secure_filename(file.filename)
             absolute_file_url = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(absolute_file_url)
-            prediction, recommendation = analyze_image(absolute_file_url)
-            results_list = list()
-            for i in recommendation:
-              img = build_img_info(str(i), "imgs")
-              results_list.append(img)
-            source = img_info(0, prediction, 'User input', "/static/img/" + filename)
-            return render_template("show_image.html", source = source, results_list= results_list)
+            return analyze_and_render(absolute_file_url, '/static/upload/'+filename)
+
+def get_style_name(style_id):
+  return style_name[style_id]
 
 def analyze_image(image_file_name):
   image = caffe.io.load_image(image_file_name)
   ft = vgg_ft.extract(image)
   prediction = vgg_svc.predict(ft)[0]
   score = vgg_svc.get_decision(ft)
-  recommendation = recommender.recommend(score)
-  return prediction, recommendation
+  recommendation = recommender.recommend(score, 8)
+  votes = recommender.convert_to_votes(score)
+  return prediction, recommendation, votes
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+def analyze_and_render(absolute_file_url, get_url, id=0, artist='', name=''):
+  prediction, recommendation, poss = analyze_image(absolute_file_url)
+  results_list = []
+  for i in recommendation:
+    img = build_img_info(str(i), "imgs")
+    results_list.append(img)
+  source = img_info(id, prediction, artist, name, get_url)
+  return render_template("show_image.html", source = source, results_list= results_list, poss = poss)
 
 def get_result_id(src):
   print src
-  return random.sample(range(0, 8000), 6)
+  return random.sample(range(0, 8000), 8)
 
-  
 def build_img_info(img_id, table):
   if img_id != None:
     if table == "tests":
@@ -123,9 +131,22 @@ def build_img_info(img_id, table):
     entry = cursor.fetchone() 
     if entry != None:
       url = "/static/img/" + entry['name']
-      return img_info(img_id, entry['style'], entry['name'], url)
+      info = entry['name'].split("_")
+      artist = info[0].replace("-"," ").title()
+      name = (info[1].replace("-", " ")).replace(".jpg","").title()
+      return img_info(img_id, entry['style'], artist, name, url)
   cursor.close()
   return None   
+
+@app.route('/query_url')
+def query_url():
+  img_url = request.args.get("img_url")
+  if img_url != None:
+    try:
+      return analyze_and_render(img_url,  img_url)
+    except:
+      pass
+  return "invalid image url" 
 
 @app.route('/query')
 def query():
@@ -133,12 +154,8 @@ def query():
   if img_id != None:
     source = build_img_info(img_id, "tests")
     if source != None:
-      results_id = get_result_id(int(img_id))
-      results_list = list()
-      for i in results_id:
-        img = build_img_info(str(i), "imgs")
-        results_list.append(img)
-      return render_template("show_image.html", source = source, results_list= results_list)
+      filename = source.url[12:]
+      return analyze_and_render(img_dir+filename, '/static/img/'+filename, source.artist, source.name)
     else:
       return "img does not exist" 
 

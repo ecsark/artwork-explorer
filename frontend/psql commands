@@ -23,3 +23,12 @@ CREATE TABLE tests(
   name text NOT NULL,
   PRIMARY KEY (id)
 );
+
+
+CREATE TABLE user_conv(
+  id serial ,
+  src int NOT NULL,
+  style int NOT NULL CHECK ( 0 <= style) CHECK (style <= 9),
+  PRIMARY KEY (id),
+  FOREIGN KEY(src) REFERENCES tests 
+);
