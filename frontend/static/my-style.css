@@ -3,6 +3,10 @@
     background-color: lightcyan;
 }
 
+body {
+    background-color: #efefef;
+}
+
 img {
     background-image: url(pic_1.jpg);
     background-repeat: no-repeat;

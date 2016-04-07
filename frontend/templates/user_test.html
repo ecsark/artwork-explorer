@@ -7,42 +7,40 @@
 <body>
 
 <div class="container">
-<div class="row">
-<div class="col-lg-12">
-                <h1 class="page-header">Human Artwork Style Recognition Test</h1>
-</div>
+	<div class="row">
+		<div class="col-lg-12">
+		   <h1 class="page-header">Human Artwork Style Recognition Test</h1>
+		</div>
 
-<div class="col-lg-6 col-md-6 col-xs-6 thumb">
-<img class="img-responsive"  src='{{source.url}}' style="height: 500px;" />
-<form method="GET" action="/user_test">
-<input type=submit value=next>
-</form>
-</div>
-<div class="col-lg-6 ">  
-<h2 class="page-header"> It's ... </h2>
-</div>
+		<div class="col-lg-6 col-md-6 col-xs-6 thumb">
+			<img class="img-responsive"  src='{{source.url}}' style="height: 500px;" />
+				<form method="GET" action="/user_test">
+				<button type=submit class="btn btn-default" >Next</button>
+			</form>
+		</div>
 
-<div class="col-lg-6 ">  
-<form action="/new_pair" id="style_select">
-<select name="style" form="style_select">
- <option value="0">  Art Nouveau (Modern) </option>
- <option value="1">  Baroque </option>
- <option value="2">  Expressionism </option>
- <option value="3">  Impressionism </option>
- <option value="4">  Neoclassicism </option>
- <option value="5">  Post-Impressionism </option>
- <option value="6">  Realism </option>
- <option value="7">  Romanticism </option>
- <option value="8">  Surrealism </option>
- <option value="9">  Symbolism </option>
-</select>   
-<input type="hidden" name="img_id" value='{{img_id}}'/>
-  <input type=submit value='submit'>
-</form>
-</div>
+		<div class="col-lg-6 ">  
+		<form action="/new_pair" id="style_select"   class="form-inline">
+			<h2>It's </h2>
+			<select name="style" form="style_select" class="form-control" >
+			 <option value="0">  Art Nouveau (Modern) </option>
+			 <option value="1">  Baroque </option>
+			 <option value="2">  Expressionism </option>
+			 <option value="3">  Impressionism </option>
+			 <option value="4">  Neoclassicism </option>
+			 <option value="5">  Post-Impressionism </option>
+			 <option value="6">  Realism </option>
+			 <option value="7">  Romanticism </option>
+			 <option value="8">  Surrealism </option>
+			 <option value="9">  Symbolism </option>
+			</select>   
+			<input type="hidden" name="img_id" value='{{img_id}}'/>
+			<button type=submit class="btn btn-success" >Submit</button>
+		</form>
+		</div>
 
 
-</div>
+	</div>
 </div>
 
 </body>

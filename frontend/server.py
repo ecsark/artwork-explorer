@@ -155,7 +155,14 @@ def query():
     source = build_img_info(img_id, "tests")
     if source != None:
       filename = source.url[12:]
-      return analyze_and_render(img_dir+filename, '/static/img/'+filename, source.artist, source.name)
+      absolute_file_url = img_dir+filename
+      prediction, recommendation, poss = analyze_image(absolute_file_url)
+      results_list = []
+      for i in recommendation:
+        img = build_img_info(str(i), "imgs")
+        results_list.append(img)
+      source.url = '/static/img/'+filename
+      return render_template("show_image.html", source = source, results_list= results_list, poss = poss)
     else:
       return "img does not exist" 
 

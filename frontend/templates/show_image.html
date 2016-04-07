@@ -10,7 +10,7 @@
 		var chart = new CanvasJS.Chart("chartContainer", {
 
 			title:{
-				text:"Possibility of Styles"				
+				text:"Style Guess"				
 
 			},
                         animationEnabled: true,
@@ -62,38 +62,37 @@ chart.render();
 <body>
 
 <div class="container">
-<div class="row">
-<div class="col-lg-12">
-                <h2 class="page-header">Source Image</h2>
-</div>
-<div class="col-lg-6 col-md-4 col-xs-6 thumb">
-<img class="img-responsive"  src='{{source.url}}' style="height: 300px;" />
-<div> style: {{source.style}} </div>
-</div>
-<div class="col-lg-6 col-md-4 col-xs-6 thumb">  
-<div id="chartContainer" style="height: 300px; width: 100%;"> </div>
-</div>
-</div>
-</div>
-
-<div class="container">
-<div class="row">
-
-            <div class="col-lg-12">
-                <h2 class="page-header">Similar Style</h2>
-            </div>
-{% for n in results_list %}
-            <div class="col-lg-3 col-md-4 col-xs-6 thumb">
-            	{{n.artist}}</br>	
-          		{{n.name}}</br>
-          		{{n.style}}</br>
-                <a class="thumbnail" href="#">
-                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;">
-                </a>
-            </div>
-{% endfor %}            
+	<div class="row">
+		<div class="col-lg-12">
+		     <h2 class="page-header">Source Image</h2>
+		</div>
+		<div class="col-lg-6 col-md-4 col-xs-6 thumb">
+			<img class="img-responsive"  src='{{source.url}}' style="height: 300px;" />
+		<div> style: {{source.style}} </div>
+		</div>
+			<div class="col-lg-6 col-md-4 col-xs-6 thumb">  
+			<div id="chartContainer" style="height: 300px; width: 100%;"> </div>
+		</div>
+	</div>
 </div>
 
+	<div class="container">
+		<div class="row">
+
+		            <div class="col-lg-12">
+		                <h2 class="page-header">Similar Style</h2>
+		            </div>
+		{% for n in results_list %}
+		            <div class="col-lg-3 col-md-4 col-xs-6 thumb">
+		            	{{n.artist}}</br>
+		            	<i>{{n.style}}</i></br>
+		                <a class="thumbnail" href="#">
+		                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;" title="{{n.name}}">
+		                </a>
+		            </div>
+		{% endfor %}            
+		</div>
+	</div>
 </body>
 
 </html>	
