@@ -1,0 +1,39 @@
+<html>
+
+<head>
+
+</head>
+<body>
+<h1> user recognition test</h1>
+
+<img style='margin-top:auto; margin-left: auto; margin-right: auto; display: block;' width='400px' src='{{source.url}}' />
+<form method="GET" action="/user_test">
+<input type=submit value=next>
+</form>
+
+<h1> please choose a style for this image {{img_id}}</h1>
+
+
+
+
+
+<form action="/new_pair" id="style_select">
+<select name="style" form="style_select">
+ <option value="0">  Art Nouveau (Modern) </option>
+ <option value="1">  Baroque </option>
+ <option value="2">  Expressionism </option>
+ <option value="3">  Impressionism </option>
+ <option value="4">  Neoclassicism </option>
+ <option value="5">  Post-Impressionism </option>
+ <option value="6">  Realism </option>
+ <option value="7">  Romanticism </option>
+ <option value="8">  Surrealism </option>
+ <option value="9">  Symbolism </option>
+</select>   
+<input type="hidden" name="img_id" value='{{img_id}}'/>
+  <input type=submit value='submit'>
+</form>
+
+</body>
+
+</html>	

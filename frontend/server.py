@@ -2,17 +2,35 @@
 
 import os
 import errno
-from flask import Flask, g, request, render_template
+from flask import Flask, g, request, render_template, redirect
 from sqlalchemy import *
 import random
+from werkzeug import secure_filename
+import caffe    
+from mona_lisa import VGGFeatureExtractor, PretrainedSVC, ZeroScoreRecommender
+import cPickle as pickle
+
+
+UPLOAD_FOLDER = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/frontend/static/upload/'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-img_dir = "/Volumes/Alex/Columiba_course/Visual_DB/Project/database/wikiart/images/"
+img_dir = "/Users/ecsark/Documents/visualdb/project/wikiart/images/"
 
 app = Flask(__name__, template_folder=tmpl_dir)
-
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = os.urandom(24)
+
+
+proj_root = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/'
+caffe_root = '/Users/ecsark/Documents/visualdb/caffe/'
+model_weights = caffe_root + 'models/vgg/model.caffemodel'
+model_def = caffe_root + 'models/vgg/deploy.prototxt'
+vgg_ft = VGGFeatureExtractor(model_weights, model_def)
+vgg_svc = PretrainedSVC(proj_root + 'model/svc_vgg_fc7.pk')
+recommender = ZeroScoreRecommender(proj_root + 'model/decision_scores_train.pk')
 
 
 DATABASEURI = "postgresql://localhost/artdb"
@@ -56,6 +74,39 @@ def teardown_request(exception):
 def index():
   return render_template("index.html")
 
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+@app.route('/upload_file', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            absolute_file_url = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(absolute_file_url)
+            prediction, recommendation = analyze_image(absolute_file_url)
+            results_list = list()
+            for i in recommendation:
+              img = build_img_info(str(i), "imgs")
+              results_list.append(img)
+            source = img_info(0, prediction, 'User input', "/static/img/" + filename)
+            return render_template("show_image.html", source = source, results_list= results_list)
+
+def analyze_image(image_file_name):
+  image = caffe.io.load_image(image_file_name)
+  ft = vgg_ft.extract(image)
+  prediction = vgg_svc.predict(ft)[0]
+  score = vgg_svc.get_decision(ft)
+  recommendation = recommender.recommend(score)
+  return prediction, recommendation
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
 def get_result_id(src):
   print src
   return random.sample(range(0, 8000), 6)
@@ -91,6 +142,21 @@ def query():
     else:
       return "img does not exist" 
 
+@app.route('/user_test')
+def get_test_img():
+  img_id = random.randint(0,1999)
+  source = build_img_info(img_id, "tests")
+  return render_template("user_test.html", source = source, img_id = img_id)
+
+@app.route('/new_pair')
+def new_pair():
+  select = request.args.get('style')
+  img_id = request.args.get('img_id')
+  cursor = g.conn.execute("INSERT INTO user_conv (id, src, style) VALUES (DEFAULT, %s, %s);", img_id, select)
+  return redirect('user_test')
+  img_id = random.randint(0,1999)
+  source = build_img_info(img_id, "tests")
+  return render_template("user_test.html", source = source, img_id = img_id)
 
 if __name__ == "__main__":
   import click

@@ -2,7 +2,7 @@
 
 from sqlalchemy import *
 
-trainfile = "train.txt"
+trainfile = "test.txt"
 
 DATABASEURI = "postgresql://localhost/artdb"
 engine = create_engine(DATABASEURI)
@@ -16,7 +16,7 @@ if __name__ == "__main__":
 		img_name = info[0]
 		img_style = int(info[1])
 		print "id: %d, name: %s, style: %d \n" % (img_id, img_name, img_style)
-		conn.execute("INSERT INTO imgs VALUES (%s, %s, %s);" , (img_id, img_style, img_name))
+		conn.execute("INSERT INTO tests VALUES (%s, %s, %s);" , (img_id, img_style, img_name))
 		img_id += 1
 
 	conn.close()		
