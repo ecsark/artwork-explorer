@@ -7,9 +7,10 @@ from sqlalchemy import *
 import random
 from werkzeug import secure_filename
 import caffe    
-from mona_lisa import VGGFeatureExtractor, PretrainedSVC, ZeroScoreRecommender
+from mona_lisa import VGGExtractor, HogExtractor, LBPExtractor, PretrainedSVC, ZeroScoreRecommender, Recommender
 from flask_bootstrap import Bootstrap
-import cPickle as pickle
+import cPickle as pk
+import cv2
 
 
 UPLOAD_FOLDER = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/frontend/static/upload/'
@@ -28,9 +29,13 @@ proj_root = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/'
 caffe_root = '/Users/ecsark/Documents/visualdb/caffe/'
 model_weights = caffe_root + 'models/vgg/model.caffemodel'
 model_def = caffe_root + 'models/vgg/deploy.prototxt'
-vgg_ft = VGGFeatureExtractor(model_weights, model_def)
+vgg_ft = VGGExtractor(model_weights, model_def)
+hog_ft = HogExtractor()
+lbp_ft = LBPExtractor()
 vgg_svc = PretrainedSVC(proj_root + 'model/svc_vgg_fc7.pk')
-recommender = ZeroScoreRecommender(proj_root + 'model/decision_scores_train.pk')
+vote_recommender = ZeroScoreRecommender(pk.load(open(proj_root + 'model/decision_scores_train.pk', 'rb')))
+hog_recommender = Recommender(pk.load(open(proj_root + 'model/hog_train.pk', 'rb')))
+lbp_recommender = Recommender(pk.load(open(proj_root + 'model/lbp_train.pk', 'rb')))
 
 
 DATABASEURI = "postgresql://localhost/artdb"
@@ -100,11 +105,17 @@ def get_style_name(style_id):
 
 def analyze_image(image_file_name):
   image = caffe.io.load_image(image_file_name)
-  ft = vgg_ft.extract(image)
-  prediction = vgg_svc.predict(ft)[0]
-  score = vgg_svc.get_decision(ft)
-  recommendation = recommender.recommend(score, 8)
-  votes = recommender.convert_to_votes(score)
+  ft_vgg = vgg_ft.extract(image)
+  prediction = vgg_svc.predict(ft_vgg)[0]
+  score = vgg_svc.get_decision(ft_vgg)
+  votes = vote_recommender.convert_to_votes(score)
+  im = cv2.imread(image_file_name)
+  ft_hog = hog_ft.extract(im)
+  ft_lbp = lbp_ft.extract(im)
+  recommendation1 = vote_recommender.recommend(score, k=32)
+  recommendation2 = lbp_recommender.recommend(ft_lbp, k=16)
+  recommendation = hog_recommender.recommend(ft_hog, k=8, from_list=recommendation2)
+  #recommendation = vote_recommender.recommend(score, k=8)
   return prediction, recommendation, votes
 
 def analyze_and_render(absolute_file_url, get_url, id=0, artist='', name=''):

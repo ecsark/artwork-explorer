@@ -8,8 +8,10 @@ import os, sys
 import subprocess
 import math
 import lmdb
+from skimage.feature import local_binary_pattern
+from scipy.stats import itemfreq
 
-class VGGFeatureExtractorCPP:
+class VGGExtractorCPP:
     def __init__(self, input_file, dst_image, output_dir, 
                 model_def, model_weights, extract_feature_bin, feature_def):
         self.run_command = [extract_feature_bin, model_weights, model_def, feature_def, output_dir, '1', 'lmdb']
@@ -42,7 +44,7 @@ class VGGFeatureExtractorCPP:
         else:
             print "Feature extraction failed"
 
-class VGGFeatureExtractor:
+class VGGExtractor:
     def __init__(self, model_weights, model_def,
                 mean=[104.0, 117.0, 123.0], 
                 new_shape=(256, 256), crop=(244, 244)):
@@ -76,6 +78,38 @@ class VGGFeatureExtractor:
         _ = self.net.forward()
         return [self.net.blobs[ft].data[0].tolist() for ft in features]
 
+
+class LBPExtractor:
+    def __init__(self, radius=3, no_points=None):
+        self.radius = radius
+        if no_points is None:
+            self.no_points = 8 * self.radius
+        else:
+            self.no_points = no_points
+
+    def extract(self, img):
+        im_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        lbp = local_binary_pattern(im_gray, self.no_points, self.radius, method='uniform')
+        x = itemfreq(lbp.ravel())
+        return x[:, 1]/sum(x[:, 1])
+
+
+class HogExtractor:
+    def __init__(self, n_bin=16):
+        self.n_bin = n_bin
+
+    def extract(self, img):
+        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
+        mag, ang = cv2.cartToPolar(gx, gy)
+        bins = np.int32(self.n_bin*ang/(2*np.pi))
+        bin_cells = bins[:10,:10], bins[10:,:10], bins[:10,10:], bins[10:,10:]
+        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
+        hists = [np.bincount(b.ravel(), m.ravel(), self.n_bin) for b, m in zip(bin_cells, mag_cells)]
+        hist = np.hstack(hists)
+        return hist
+
+
 class PretrainedSVC:
     def __init__(self, model):
         self.svc = pickle.load(open(model, 'rb'))
@@ -99,23 +133,38 @@ class PretrainedSVC:
             scores.append(i_score)
         return scores
 
-class ZeroScoreRecommender:
-    def __init__(self, all_scores):
-        all_scores = pickle.load(open(all_scores, 'rb'))
-        self.score_rank_zero = [(np.array(decision)>0).sum(axis=1).tolist() for decision in all_scores]
-
+class Recommender(object):
+    def __init__(self, pool):
+        self.pool = pool
+    
     @staticmethod
-    def findMostSimilar(X, x_query, k=6):
-        dist = distance.cdist(X, np.array([x_query]), 'euclidean')
+    def findMostSimilar(X, x_query, k=6, f='euclidean'):
+        print len(X[0]), len(x_query)
+        dist = distance.cdist(X, np.array([x_query]), f)
         return dist.flatten().argsort()[:k]
+
+    def recommend(self, input_ft, k=6, from_list=None, f='euclidean'):
+        if from_list is None:
+            pool = self.pool
+            from_list = range(len(self.pool))
+        else:
+            pool = [self.pool[i] for i in from_list]
+        k_sim_idx = self.findMostSimilar(pool, input_ft, k, f)
+        return [from_list[i] for i in k_sim_idx]
+
+
+class ZeroScoreRecommender(Recommender):
+    def __init__(self, all_scores):
+        score_rank_zero = [(np.array(decision)>0).sum(axis=1).tolist() for decision in all_scores]
+        super(ZeroScoreRecommender, self).__init__(score_rank_zero)
 
     @staticmethod
     def convert_to_votes(decision):
         return (np.array(decision)>0).sum(axis=1).tolist()
 
-    def recommend(self, decision, k=6):
-        k_sim_idx = self.findMostSimilar(self.score_rank_zero, self.convert_to_votes(decision), k)
-        return k_sim_idx
+    def recommend(self, decision, k=6, from_list=None):
+        ft = self.convert_to_votes(decision)
+        return super(ZeroScoreRecommender, self).recommend(ft, k, from_list, 'cityblock')
 
 
 class MonaLisa:
