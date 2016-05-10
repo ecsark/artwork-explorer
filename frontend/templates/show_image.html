@@ -20,7 +20,7 @@
       axisX:{
         interval: 1,
         gridThickness: 0,
-        labelFontSize: 11,
+        labelFontSize: 12,
         labelFontStyle: "italic",
         labelFontWeight: "normal",
         labelFontFamily: "Lucida Sans Unicode"
@@ -55,13 +55,13 @@
       axisX:{
         interval: 1,
         gridThickness: 0,
-        labelFontSize: 11,
+        labelFontSize: 12,
         labelFontStyle: "italic",
         labelFontWeight: "normal",
         labelFontFamily: "Lucida Sans Unicode"
       },
       axisY2:{
-        interlacedColor: "rgba(1,77,101,.2)",
+        interlacedColor: "rgba(168,230,207,.2)",
         gridColor: "rgba(1,77,101,.1)"
       },
       width: width,
@@ -71,7 +71,7 @@
         type: "bar",
         name: "authors",
         axisYType: "secondary",
-        color: "#014D65",
+        color: "#42b48e",
         dataPoints: [
           {% for artist in artists %}
             {y: {{artist[1]}}, label: "{{artist[0]}}"  },
@@ -91,13 +91,13 @@
       axisX:{
         interval: 1,
         gridThickness: 0,
-        labelFontSize: 11,
+        labelFontSize: 12,
         labelFontStyle: "italic",
         labelFontWeight: "normal",
         labelFontFamily: "Lucida Sans Unicode"
       },
       axisY2:{
-      interlacedColor: "rgba(1,77,101,.2)",
+      interlacedColor: "rgba(252,245,244,.2)",
       gridColor: "rgba(1,77,101,.1)"
       },
       width: width,
@@ -107,7 +107,7 @@
           type: "bar",
           name: "authors",
           axisYType: "secondary",
-          color: "#014D65",
+          color: "#b1ade5",
           dataPoints: [
           {% for year in years %}
             {y: {{year[1]}}, label: "{{year[0]}}"  },

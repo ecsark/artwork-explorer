@@ -1,18 +1,17 @@
-import os
-import errno
-from flask import Flask, g, request, render_template, redirect
-from sqlalchemy import *
-import random
-from werkzeug import secure_filename
-import caffe
-from mona_lisa import VGGExtractor, HogExtractor, LBPExtractor, PretrainedSVC, ZeroScoreRecommender, Recommender
-from flask_bootstrap import Bootstrap
 import cPickle as pk
-import cv2
+import errno
+import os
+import random
+
+import caffe
 import scipy.stats
-import urllib
-import numpy as np
-import skimage
+from flask import Flask, g, request, render_template, redirect
+from flask_bootstrap import Bootstrap
+from sqlalchemy import *
+from werkzeug import secure_filename
+from multiprocessing.dummy import Pool as ThreadPool
+
+from mona_lisa import VGGExtractor, HogExtractor, LBPExtractor, PretrainedSVC, ZeroScoreRecommender, Recommender
 
 UPLOAD_FOLDER = '/Users/ecsark/Documents/visualdb/project/artwork-explorer/frontend/static/upload/'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
@@ -104,25 +103,21 @@ class ImageContainer:
 		self.url = url
 
 
-def url_to_image(url):
-	image = skimage.io.read(url)
-	return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	resp = urllib.urlopen(url)
-	image = np.asarray(bytearray(resp.read()), dtype=np.float32)
-	image = cv2.imdecode(image, -1)
-	return image
-
-
 def extract_feature(image_file_name):
-	im = caffe.io.load_image(image_file_name)
-	ft_vgg = vgg_ft.extract(im)
-	im = im[:,:,(2,1,0)]*255
-	# try:
-	# 	im = cv2.imread(image_file_name)
-	# except:
-	# 	im = url_to_image(image_file_name)
-	ft_hog = hog_ft.extract(im)
-	ft_lbp = lbp_ft.extract(im)
+	img = caffe.io.load_image(image_file_name)
+	im = img[:, :, (2, 1, 0)] * 255
+
+	def extract_(args):
+		return args[0].extract(args[1])
+
+	pool = ThreadPool(3)
+	ft_vgg, ft_hog, ft_lbp = tuple(pool.map(extract_,
+	                                        [(vgg_ft, img),
+	                                         (hog_ft, im),
+	                                         (lbp_ft, im)]))
+	# ft_vgg = vgg_ft.extract(img)
+	# ft_hog = hog_ft.extract(im)
+	# ft_lbp = lbp_ft.extract(im)
 	return {'vgg': ft_vgg, 'hog': ft_hog, 'lbp': ft_lbp}
 
 
@@ -168,7 +163,7 @@ def extract_artist_info(file_name):
 			if n.isdigit():
 				if len(n) == 4:
 					year = int(n)
-					name = ' '.join(b[:len(b)-idx])
+					name = ' '.join(b[:len(b) - idx])
 					break
 			else:
 				break
@@ -196,20 +191,23 @@ def parse_name(st):
 	return ' '.join(st.split('-')).title()
 
 
-def build_result(features, analyze_fn):
-	pred, rec, votes = analyze_fn(features)
-	results = list()
-	for i in rec:
-		img = build_img_info(str(i), "imgs")
-		results.append(img)
-	return results, votes, pred
-
-
 def analyze_and_render(absolute_file_url, get_url, source=None):
 	features = extract_feature(absolute_file_url)
-	style_results, style_votes, style_pred = build_result(features, analyze_style)
-	artist_results, artist_votes, artist_pred = build_result(features, analyze_artist)
-	year_results, year_votes, year_pred = build_result(features, analyze_year)
+
+	def build_(analyze_fn):
+		return analyze_fn(features)
+
+	pool = ThreadPool(3)
+	styles, artists, years = tuple(pool.map(build_, [analyze_style, analyze_artist, analyze_year]))
+
+	style_pred, style_rec, style_votes = styles
+	artist_pred, artist_rec, artist_votes = artists
+	year_pred, year_rec, year_votes = years
+
+	style_results = [build_img_info(str(i), 'imgs') for i in style_rec]
+	artist_results = [build_img_info(str(i), 'imgs') for i in artist_rec]
+	year_results = [build_img_info(str(i), 'imgs') for i in year_rec]
+
 	style_show = sorted([(style_name[i], v) for i, v in enumerate(style_votes)], key=lambda x: x[1])
 	artist_show = artist_svc.get_top_k_classes(artist_votes, 10)
 	artist_min = min([a[1] for a in artist_show]) - 10
@@ -237,7 +235,7 @@ def query_url():
 	try:
 		return analyze_and_render(img_url, img_url)
 	except Exception as e:
-	 	print e
+		print e
 
 
 @app.route('/upload_file', methods=['GET', 'POST'])
