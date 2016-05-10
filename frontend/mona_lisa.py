@@ -133,13 +133,22 @@ class PretrainedSVC:
             scores.append(i_score)
         return scores
 
+    @staticmethod
+    def convert_to_votes(decision):
+        return (np.array(decision)>0).sum(axis=1).tolist()
+
+    def get_votes(self, fts):
+        return self.convert_to_votes(self.get_decision(fts))
+
+    def get_top_k_classes(self, votes, k=10):
+        return [(self.svc.classes_[i], votes[i]) for i in np.argsort(votes)[::-1][:k]]
+
 class Recommender(object):
     def __init__(self, pool):
         self.pool = pool
     
     @staticmethod
     def findMostSimilar(X, x_query, k=6, f='euclidean'):
-        print len(X[0]), len(x_query)
         dist = distance.cdist(X, np.array([x_query]), f)
         return dist.flatten().argsort()[:k]
 
@@ -154,17 +163,15 @@ class Recommender(object):
 
 
 class ZeroScoreRecommender(Recommender):
-    def __init__(self, all_scores):
-        score_rank_zero = [(np.array(decision)>0).sum(axis=1).tolist() for decision in all_scores]
-        super(ZeroScoreRecommender, self).__init__(score_rank_zero)
+    def __init__(self, all_votes):
+        super(ZeroScoreRecommender, self).__init__(all_votes)
 
     @staticmethod
     def convert_to_votes(decision):
         return (np.array(decision)>0).sum(axis=1).tolist()
 
-    def recommend(self, decision, k=6, from_list=None):
-        ft = self.convert_to_votes(decision)
-        return super(ZeroScoreRecommender, self).recommend(ft, k, from_list, 'cityblock')
+    def recommend(self, votes, k=6, from_list=None, f='cityblock'):
+        return super(ZeroScoreRecommender, self).recommend(votes, k, from_list, f)
 
 
 class MonaLisa:

@@ -1,16 +1,25 @@
 <!DOCTYPE HTML>
 <html>
-<link rel="stylesheet" media="screen" href = "{{ url_for('static', filename='bootstrap.min.css') }}">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
 <head>
 
 
 <script type="text/javascript">
+var charts = [];
+var width;
+var height;
+
 	window.onload = function () {
+		width = $('#myCarousel').width();
+		height = $('#myCarousel').height();
 		var chart = new CanvasJS.Chart("chartContainer", {
 
 			title:{
-				text:"Style Guess"				
+				text:"Possibility of Styles"				
 
 			},
                         animationEnabled: true,
@@ -18,7 +27,7 @@
 				interval: 1,
 				gridThickness: 0,
 				labelFontSize: 10,
-				labelFontStyle: "normal",
+				labelFontStyle: "italic",
 				labelFontWeight: "normal",
 				labelFontFamily: "Lucida Sans Unicode"
 
@@ -28,7 +37,8 @@
 				gridColor: "rgba(1,77,101,.1)"
 
 			},
-
+			width: width,
+    		height: height,
 			data: [
 			{     
 				type: "bar",
@@ -36,17 +46,9 @@
 				axisYType: "secondary",
 				color: "#014D65",				
 				dataPoints: [
-				
-				{y: {{poss[0]}}, label: "Art Nouveau (Modern)"  },
-				{y: {{poss[1]}}, label: "Baroque"  },
-				{y: {{poss[2]}}, label: "Expressionism"  },
-				{y: {{poss[3]}}, label: "Impressionism"  },
-				{y: {{poss[4]}}, label: "Neoclassicism"  },
-				{y: {{poss[5]}}, label: "Post-Impressionism"  },
-				{y: {{poss[6]}}, label: "Realism"  },
-				{y: {{poss[7]}}, label: "Romanticism"  },
-				{y: {{poss[8]}}, label: "Surrealism"  },
-				{y: {{poss[9]}}, label: "Symbolism"  }
+      {% for style in styles %} 
+        {y: {{style[1]}}, label: "{{style[0]}}"  },
+      {% endfor %}
 				]
 			}
 			
@@ -54,45 +56,346 @@
 		});
 
 chart.render();
+charts.push(chart);
+
+		var authorchart = new CanvasJS.Chart("authorChart", {
+
+			title:{
+				text:"Possibility of Authors"				
+
+			},
+                        animationEnabled: true,
+			axisX:{
+        interval: 1,
+        gridThickness: 0,
+        labelFontSize: 10,
+        labelFontStyle: "italic",
+        labelFontWeight: "normal",
+        labelFontFamily: "Lucida Sans Unicode"
+
+      },
+      axisY2:{
+        interlacedColor: "rgba(1,77,101,.2)",
+        gridColor: "rgba(1,77,101,.1)"
+
+      },
+
+			width: width,
+    		height: height,
+			data: [
+			{     
+				type: "bar",
+                name: "authors",
+				axisYType: "secondary",
+				color: "#014D65",				
+				dataPoints: [
+			{% for artist in artists %}	
+				{y: {{artist[1]}}, label: "{{artist[0]}}"  },
+      {% endfor %}
+				]
+      
+			}
+			
+			]
+		});
+
+
+authorchart.render();
+charts.push(authorchart);
+
+		var agechart = new CanvasJS.Chart("ageChart", {
+
+			title:{
+				text:"Possibility of Years"				
+
+			},
+                        animationEnabled: true,
+			axisX:{
+        interval: 1,
+        gridThickness: 0,
+        labelFontSize: 10,
+        labelFontStyle: "italic",
+        labelFontWeight: "normal",
+        labelFontFamily: "Lucida Sans Unicode"
+
+      },
+      axisY2:{
+        interlacedColor: "rgba(1,77,101,.2)",
+        gridColor: "rgba(1,77,101,.1)"
+
+      },
+
+			width: width,
+    		height: height,
+			data: [
+			{     
+				type: "bar",
+                name: "authors",
+				axisYType: "secondary",
+				color: "#014D65",				
+				dataPoints: [
+				{% for year in years %} 
+          {y: {{year[1]}}, label: "{{year[0]}}"  },
+        {% endfor %}
+				]
+			}
+			
+			]
+		});
+
+
+agechart.render();
+charts.push(agechart);
 }
+
+
+
+
+
+
+$(window).resize(function() {
+    for(var i = 0; i < charts.length; i++) {
+        charts[i].options.width = $('#myCarousel').width();
+        charts[i].options.height = $('#myCarousel').height();
+        charts[i].render();
+    }
+});
+
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='canvasjs.min.js')}}"></script>
+
+
+<style type="text/css">
+.carousel{
+    background: #FFFFFF;
+    margin-top: 0px;
+}
+.carousel .item img{
+    margin: 0 auto; /* Align slide image horizontally center */
+}
+.bs-example{
+	margin: 20px;
+}
+.hovereffect {
+  width: 100%;
+  height: 100%;
+  float: left;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+  cursor: default;
+}
+
+.hovereffect .overlay {
+  position: absolute;
+  overflow: hidden;
+  width: 80%;
+  height: 80%;
+  left: 10%;
+  top: 10%;
+  border-bottom: 1px solid #FFF;
+  border-top: 1px solid #FFF;
+  -webkit-transition: opacity 0.35s, -webkit-transform 0.35s;
+  transition: opacity 0.35s, transform 0.35s;
+  -webkit-transform: scale(0,1);
+  -ms-transform: scale(0,1);
+  transform: scale(0,1);
+}
+
+.hovereffect:hover .overlay {
+  opacity: 1;
+  filter: alpha(opacity=100);
+  -webkit-transform: scale(1);
+  -ms-transform: scale(1);
+  transform: scale(1);
+}
+
+.hovereffect img {
+  display: block;
+  position: relative;
+  -webkit-transition: all 0.35s;
+  transition: all 0.35s;
+}
+
+.hovereffect:hover img {
+  filter: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="filter"><feComponentTransfer color-interpolation-filters="sRGB"><feFuncR type="linear" slope="0.6" /><feFuncG type="linear" slope="0.6" /><feFuncB type="linear" slope="0.6" /></feComponentTransfer></filter></svg>#filter');
+  filter: brightness(0.6);
+  -webkit-filter: brightness(0.6);
+}
+
+.hovereffect h2 {
+  text-transform: uppercase;
+  text-align: center;
+  position: relative;
+  font-size: 14px;
+  background-color: transparent;
+  color: #FFF;
+  padding: 1em 0;
+  opacity: 0;
+  filter: alpha(opacity=0);
+  -webkit-transition: opacity 0.35s, -webkit-transform 0.35s;
+  transition: opacity 0.35s, transform 0.35s;
+  -webkit-transform: translate3d(0,-100%,0);
+  transform: translate3d(0,-100%,0);
+}
+
+.hovereffect a, hovereffect p {
+  color: #FFF;
+  padding: 1em 0;
+  opacity: 0;
+  filter: alpha(opacity=0);
+  -webkit-transition: opacity 0.35s, -webkit-transform 0.35s;
+  transition: opacity 0.35s, transform 0.35s;
+  -webkit-transform: translate3d(0,100%,0);
+  transform: translate3d(0,100%,0);
+}
+
+.hovereffect:hover a, .hovereffect:hover p, .hovereffect:hover h2 {
+  opacity: 1;
+  filter: alpha(opacity=100);
+  -webkit-transform: translate3d(0,0,0);
+  transform: translate3d(0,0,0);
+}
+
+
+
+
+</style>
 
 </head>
 <body>
 
 <div class="container">
-	<div class="row">
-		<div class="col-lg-12">
-		     <h2 class="page-header">Source Image</h2>
-		</div>
-		<div class="col-lg-6 col-md-4 col-xs-6 thumb">
-			<img class="img-responsive"  src='{{source.url}}' style="height: 300px;" />
-		<div> style: {{source.style}} </div>
-		</div>
-			<div class="col-lg-6 col-md-4 col-xs-6 thumb">  
-			<div id="chartContainer" style="height: 300px; width: 100%;"> </div>
-		</div>
-	</div>
+<div class="row">
+<div class="col-lg-12">
+                <h1 class="page-header">Source Image</h1>
+</div>
+<div class="col-lg-6 col-md-4 col-xs-6 thumb">
+<img class="img-responsive"  src='{{source.url}}' style="height: 300px;" />
+<div> style: {{source.style}} </div>
+</div>
+<div class="col-lg-6 col-md-4 col-xs-6 thumb">  
+
+
+
+<div id="myCarousel" class="carousel slide" data-ride="carousel">
+        <!-- Carousel indicators -->
+        <ol class="carousel-indicators">
+            <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+            <li data-target="#myCarousel" data-slide-to="1"></li>
+            <li data-target="#myCarousel" data-slide-to="2"></li>
+        </ol>   
+        <!-- Wrapper for carousel items -->
+        <div class="carousel-inner">
+        	<div class="item active">
+            <div id="chartContainer" style="height: 300px; width: 100%;" > </div>
+        	</div>
+            <div class="item">
+            <div id="authorChart" style="height: 300px; width: 100%;" > </div>        	
+            </div>
+        	<div class="item">
+            <div id="ageChart" style="height: 300px; width: 100%;"> </div>        	
+        	</div>
+        </div>
+
+
+        
+    </div>
+</div>
+</body>
+
+
+
+
+</div>
+</div>
 </div>
 
-	<div class="container">
-		<div class="row">
+<div class="container">
+<div class="row">
 
-		            <div class="col-lg-12">
-		                <h2 class="page-header">Similar Style</h2>
-		            </div>
-		{% for n in results_list %}
-		            <div class="col-lg-3 col-md-4 col-xs-6 thumb">
-		            	{{n.artist}}</br>
-		            	<i>{{n.style}}</i></br>
-		                <a class="thumbnail" href="#">
-		                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;" title="{{n.name}}">
-		                </a>
-		            </div>
-		{% endfor %}            
-		</div>
-	</div>
+
+
+<div id="imgCarousel" class="carousel slide" data-ride="carousel">
+        <!-- Carousel indicators -->
+        <ol class="carousel-indicators">
+            <li data-target="#imgCarousel" data-slide-to="0" class="active"></li>
+            <li data-target="#imgCarousel" data-slide-to="1"></li>
+            <li data-target="#imgCarousel" data-slide-to="2"></li>
+        </ol>   
+        <!-- Wrapper for carousel items -->
+        <div class="carousel-inner">
+        	<div class="item active">
+            <div class="col-lg-12">
+                <h1 class="page-header">Related Styles</h1>
+            </div>
+{% for n in style_pics %}
+            <div class="col-lg-3 col-md-3 col-xs-5 thumb ">
+            	
+                <a class="thumbnail" href="#" style="height: 300px;">
+                <div class="hovereffect">	
+                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;">
+                    <div class="overlay">
+                    <h2>{{n.artist}}</h2>	
+                	<h2>{{n.name}}</h2> 
+					<h2>{{n.style}}</h2>
+            		</div>
+            	</div>	
+                </a>
+            </div>
+{% endfor %}  
+        	</div>
+
+            <div class="item">
+            <div class="col-lg-12">
+                <h1 class="page-header">Related Artists</h1>
+            </div>
+{% for n in artist_pics %}
+            <div class="col-lg-3 col-md-3 col-xs-5 thumb" style="height: 300px;">
+            	
+                <a class="thumbnail" href="#" style="height: 300px;">
+                    <div class="hovereffect">	
+                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;">
+                    <div class="overlay">
+                    <h2>{{n.artist}}</h2>	
+                	<h2>{{n.name}}</h2> 
+					<h2>{{n.style}}</h2>
+            		</div>
+            	</div>	
+                </a>
+            </div>
+{% endfor %}          	
+            </div>
+        	<div class="item">
+            <div class="col-lg-12">
+                <h1 class="page-header">Related Years</h1>
+            </div>
+{% for n in year_pics %}
+            <div class="col-lg-3 col-md-3 col-xs-5 thumb">
+            	
+                <a class="thumbnail" href="#" style="height: 300px;">
+                    <div class="hovereffect">	
+                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 300px;">
+                    <div class="overlay">
+                    <h2>{{n.artist}}</h2>	
+                	<h2>{{n.name}}</h2> 
+					<h2>{{n.style}}</h2>
+            		</div>
+            	</div>	
+                </a>
+            </div>
+{% endfor %}          	
+        	</div>
+        </div>
+        <a class="carousel-control left" href="#imgCarousel" data-slide="prev" style="background: none;">&lsaquo;</a>
+				<a class="carousel-control right" href="#imgCarousel" data-slide="next" style="background: none;">&rsaquo;</a>
+
+        
+    </div>
+
+
+</div>
+
 </body>
 
 </html>	

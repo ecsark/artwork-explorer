@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+<link rel="stylesheet" media="screen" href = "{{ url_for('static', filename='bootstrap.min.css') }}">
+<link rel="stylesheet" type="text/css" href= "{{ url_for('static', filename='column.css') }}">
+
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+<script>
+
+
+function validateForm() {
+    var cnt = $("input[name='check']:checked").length;
+    if (cnt != 4) {
+      $(this).prop("checked", "");
+      alert('Please select 4 pictures');
+      return false;
+    }
+}
+
+</script>
+</head>
+<body>
+
+<div class="container">
+
+<dic class="row">
+<div class="col-sm-4" id="left">
+    <h1 class="page-header">Source Image</h1>
+<img class="img-responsive"  src='{{source.url}}' style="height: 300px;" />
+<div> img_id: {{source.img_id}} </div>
+<div> style: {{source.style}} </div>
+ <form role="form" action="/group_result" method="POST" onsubmit="return validateForm()">  
+<input type="hidden" name="img_id" value='{{source.img_id}}'/>
+<input type="hidden" name="all_id" value='{{all_id}}'/>
+<input type="text" name="uid" value='{{uid}}'/>
+ <input type=submit value='submit' >
+</div>
+
+
+
+
+    
+ <div class="col-lg-3 col-md-4 col-xs-6 thumb" id="right">   
+
+                <h1 class="page-header">Please Choose Similar Images</h1>
+
+{% for n in results_list %}
+         <div class ="col-xs-3 ">
+                <a class="thumbnail"  href="#">
+                    <img class="img-responsive" src="{{n.url}}" alt="" style="height: 150px;">
+                </a>
+                <div class="checkbox">
+      				<label><input type="checkbox" name="check" value="{{n.img_id}}"></label>
+    			</div>
+         </div>       
+{% endfor %}
+</row>
+</div>            
+
+</form>
+</div>
+</div>
+</body>
+
+</html>	
